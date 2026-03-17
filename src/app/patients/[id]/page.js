@@ -3,6 +3,8 @@ import { ChevronLeft, Edit3, Stethoscope, ActivitySquare } from "lucide-react";
 import { getPatients, getPatientRecords } from "@/lib/sheets";
 import NewRecordModal from "@/components/NewRecordModal";
 
+export const dynamic = 'force-dynamic';
+
 export default async function PatientDetail({ params }) {
 	const { id: dbId } = params;
 	const allPatients = await getPatients();

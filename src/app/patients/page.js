@@ -2,6 +2,9 @@ import Link from "next/link";
 import { Search, Filter, ChevronRight } from "lucide-react";
 import { getPatients } from "@/lib/sheets";
 import NewPatientModal from "@/components/NewPatientModal";
+
+export const dynamic = 'force-dynamic';
+
 export default async function PatientsList() {
 	const patients = await getPatients();
 
