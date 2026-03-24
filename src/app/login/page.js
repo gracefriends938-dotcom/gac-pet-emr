@@ -68,7 +68,7 @@ export default function LoginPage() {
             margin: '0 0 6px 0',
             letterSpacing: '-0.5px',
           }}>
-            Grace Animal Clinic
+            G.A.Cアニマルクリニック
           </h1>
           <p style={{ color: '#64748b', fontSize: '14px', margin: 0 }}>
             電子カルテシステム
@@ -183,7 +183,7 @@ export default function LoginPage() {
           fontSize: '12px',
           color: '#94a3b8',
         }}>
-          © 2026 Grace Animal Clinic. All rights reserved.
+          © 2026 G.A.Cアニマルクリニック. All rights reserved.
         </p>
       </div>
     </div>

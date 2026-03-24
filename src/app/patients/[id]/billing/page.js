@@ -2,33 +2,13 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useState, useRef, useEffect, useMemo } from "react";
-import { ChevronLeft, Save, Trash2, Printer, Search, Plus } from "lucide-react";
+import { useState, useRef, useEffect, useMemo, use } from "react";
+import { ChevronLeft, Save, Trash2, Printer, Search, Plus, Loader2 } from "lucide-react";
 import Link from "next/link";
-
-
-
-// Master Data (Mock)
-const MASTER_ITEMS = [
-	{ code: "110010", category: "基本料金", name: "初診料（オンライン）", price: 1500 },
-	{ code: "110020", category: "基本料金", name: "再診料（オンライン）", price: 800 },
-	{ code: "110030", category: "基本料金", name: "同日再診料", price: 400 },
-	{ code: "120010", category: "相談・指導", name: "セカンドオピニオン相談料", price: 3000 },
-	{ code: "120020", category: "相談・指導", name: "行動・しつけ相談料", price: 2000 },
-	{ code: "120030", category: "相談・指導", name: "栄養指導料", price: 1500 },
-	{ code: "210010", category: "お薬", name: "処方料（内服薬・外用薬）", price: 300 },
-	{ code: "220010", category: "お薬", name: "ネクスガードスペクトラ 11.3", price: 2200 },
-	{ code: "220020", category: "お薬", name: "ネクスガードスペクトラ 22.5", price: 2500 },
-	{ code: "220030", category: "お薬", name: "ネクスガードスペクトラ 45", price: 2800 },
-	{ code: "220100", category: "お薬", name: "ウェルメイト点耳薬", price: 1800 },
-	{ code: "310010", category: "諸経費", name: "郵送検査キット代（便）", price: 1500 },
-	{ code: "310020", category: "諸経費", name: "郵送検査キット代（尿）", price: 1500 },
-	{ code: "320010", category: "諸経費", name: "システム利用料", price: 300 },
-	{ code: "900010", category: "配送料", name: "オンライン処方配送料", price: 330 },
-];
+import { useRouter } from 'next/navigation';
 
 export default function BillingPage({ params }) {
-	const { id } = params;
+	const { id: dbId } = use(params);
 	const [patientData, setPatientData] = useState({
 		id: "PT-----",
 		name: "読み込み中...",
@@ -36,7 +16,8 @@ export default function BillingPage({ params }) {
 		date: new Date().toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' }),
 		doctor: "獣医師 デモ"
 	});
-	const invoiceRef = useRef();
+
+	const [masterItems, setMasterItems] = useState([]);
 
 	// Fetch patient data on mount
 	useEffect(() => {
@@ -44,7 +25,7 @@ export default function BillingPage({ params }) {
 			try {
 				const res = await fetch('/api/patients');
 				const patients = await res.json();
-				const patient = patients.find(p => p.id === id) || patients[0];
+				const patient = patients.find(p => p.dbId === dbId) || patients[0];
 				if (patient) {
 					setPatientData({
 						id: patient.id,
@@ -58,8 +39,21 @@ export default function BillingPage({ params }) {
 				console.error("Failed to fetch patient:", error);
 			}
 		}
+
+		async function fetchMasterItems() {
+			try {
+				const res = await fetch('/api/master-items');
+				if (res.ok) {
+					setMasterItems(await res.json());
+				}
+			} catch (error) {
+				console.error("Failed to fetch master items:", error);
+			}
+		}
+
 		fetchPatient();
-	}, [id]);
+		fetchMasterItems();
+	}, [dbId]);
 
 	const [items, setItems] = useState([
 		{ id: 1, code: "110020", category: "基本料金", name: "再診料（オンライン）", price: 800, qty: 1 },
@@ -70,15 +64,17 @@ export default function BillingPage({ params }) {
 
 	const [searchQuery, setSearchQuery] = useState("");
 	const [filterCategory, setFilterCategory] = useState("すべて");
+	const [isSaving, setIsSaving] = useState(false);
+	const router = useRouter();
 
 	// 2. Filter Master Items
 	const filteredMasterItems = useMemo(() => {
-		return MASTER_ITEMS.filter(item => {
+		return masterItems.filter(item => {
 			const matchCategory = filterCategory === "すべて" || item.category === filterCategory;
 			const matchSearch = item.name.includes(searchQuery) || item.code.includes(searchQuery);
 			return matchCategory && matchSearch;
 		});
-	}, [searchQuery, filterCategory]);
+	}, [searchQuery, filterCategory, masterItems]);
 
 	// 3. Add Item Logic
 	const addItemFromMaster = (masterItem) => {
@@ -106,28 +102,43 @@ export default function BillingPage({ params }) {
 	const tax = Math.floor(subtotal * 0.1);
 	const total = subtotal + tax;
 
-	// 5. Staff PDF Generation (Hidden usually, but kept for printing duty)
-	const handleGeneratePDF = async () => {
-		// Dynamically import html2pdf to avoid Next.js SSR "self is not defined" error
-		const html2pdf = (await import('html2pdf.js')).default;
+	const handleSave = async () => {
+		setIsSaving(true);
+		try {
+			const res = await fetch('/api/billing', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					patientId: patientData.id,
+					items: items
+				})
+			});
+			if (res.ok) {
+				router.push(`/patients/${dbId}`);
+			} else {
+				alert("保存に失敗しました。");
+			}
+		} catch (error) {
+			console.error("Save error", error);
+			alert("エラーが発生しました。");
+		} finally {
+			setIsSaving(false);
+		}
+	};
 
-		const element = invoiceRef.current;
-		element.style.display = 'block'; // Make visible just for printing
-		const opt = {
-			margin: 10,
-			filename: `明細書_${patientData.id}_${patientData.date}.pdf`,
-			image: { type: 'jpeg', quality: 0.98 },
-			html2canvas: { scale: 2, useCORS: true },
-			jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-		};
-		html2pdf().set(opt).from(element).save().then(() => {
-			element.style.display = 'none'; // Hide again
-		});
+	// 5. Staff PDF Generation using Native window.print()
+	const handleGeneratePDF = () => {
+		const originalTitle = document.title;
+		// 一般的なファイル名：診療明細書_カルテ番号_ペット名_日付
+		document.title = `診療明細書_${patientData.id}_${patientData.name}_${patientData.date}`;
+		window.print();
+		document.title = originalTitle;
 	};
 
 	return (
-		<div className="space-y-4 max-w-[1600px] mx-auto pb-8 h-[calc(100vh-4rem)] flex flex-col">
-			{/* Header Info Banner like Anirece */}
+		<>
+			<div className="space-y-4 max-w-[1600px] mx-auto pb-8 h-[calc(100vh-4rem)] flex flex-col print:hidden">
+				{/* Header Info Banner like Anirece */}
 			<div className="bg-emerald-600 text-white p-3 rounded-lg shadow-sm flex items-center justify-between">
 				<div className="flex items-center gap-6 text-sm">
 					<h1 className="font-bold text-lg tracking-wider">診療明細編集</h1>
@@ -145,7 +156,7 @@ export default function BillingPage({ params }) {
 					<div className="bg-white/10 px-3 py-1.5 rounded flex items-center gap-2">
 						担当医: <select className="bg-transparent font-bold focus:outline-none"><option>{patientData.doctor}</option></select>
 					</div>
-					<Link href={`/patients/1`} className="bg-white text-emerald-700 hover:bg-emerald-50 px-4 py-1.5 rounded font-bold transition-colors">
+					<Link href={`/patients/${dbId}`} className="bg-white text-emerald-700 hover:bg-emerald-50 px-4 py-1.5 rounded font-bold transition-colors">
 						カルテに戻る
 					</Link>
 				</div>
@@ -302,8 +313,9 @@ export default function BillingPage({ params }) {
 
 							{/* Save Buttons & Print Action */}
 							<div className="flex gap-2">
-								<button className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded shadow flex items-center gap-2 font-bold transition-colors">
-									<Save size={18} /> 明細を保存して終了
+								<button disabled={isSaving} onClick={handleSave} className="bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-400 text-white px-6 py-2.5 rounded shadow flex items-center gap-2 font-bold transition-colors">
+									{isSaving ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />} 
+									明細を保存して終了
 								</button>
 								{/* Staff Print Button: Only visible to staff role typically, but provided here for demo */}
 								<button onClick={handleGeneratePDF} className="bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 px-4 py-2.5 rounded shadow-sm flex items-center gap-2 font-medium transition-colors ml-4">
@@ -334,12 +346,12 @@ export default function BillingPage({ params }) {
 				</div>
 
 			</div>
+		</div>
 
 			{/* Hidden Printable Invoice for Staff */}
-			<div style={{ display: 'none' }}>
+			<div className="hidden print:block w-full bg-white text-black print:absolute print:left-0 print:top-0">
 				<div
-					ref={invoiceRef}
-					className="bg-white min-w-[700px] w-[210mm] min-h-[297mm] p-12 flex flex-col text-black"
+					className="w-[210mm] mx-auto p-8 flex flex-col"
 					style={{ fontFamily: "'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif" }}
 				>
 					<div className="flex justify-between items-start border-b-2 border-black pb-4 mb-8">
@@ -348,9 +360,9 @@ export default function BillingPage({ params }) {
 							<p className="font-medium text-sm">発行日: {patientData.date}</p>
 						</div>
 						<div className="text-right text-sm">
-							<h2 className="font-bold text-lg mb-1">みるペット オンライン動物病院</h2>
-							<p>〒100-0000 東京都千代田区1-1-1</p>
-							<p>TEL: 03-XXXX-XXXX / 登録: T1234567890</p>
+							<h2 className="font-bold text-lg mb-1">G.A.Cアニマルクリニック</h2>
+							<p>〒700-0975</p>
+							<p>岡山県岡山市北区今6丁目8-12 インペリアルⅠ 1F</p>
 						</div>
 					</div>
 
@@ -408,6 +420,6 @@ export default function BillingPage({ params }) {
 				</div>
 			</div>
 
-		</div>
+		</>
 	);
 }

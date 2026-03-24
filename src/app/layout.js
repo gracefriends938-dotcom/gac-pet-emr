@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Pet EMR | Grace Animal Clinic",
-  description: "Electronic Medical Record system for Grace Animal Clinic",
+  title: "Pet EMR | G.A.Cアニマルクリニック",
+  description: "Electronic Medical Record system for G.A.Cアニマルクリニック",
 };
 
 export default function RootLayout({ children }) {
@@ -27,7 +27,7 @@ export default function RootLayout({ children }) {
         <Sidebar />
         <div className="flex flex-col flex-1 h-full min-w-0">
           <Header />
-          <main className="flex-1 overflow-y-auto p-6 lg:p-8 relative">
+          <main className="flex-1 overflow-y-auto p-6 lg:p-8 relative print:p-0 print:overflow-visible">
             {children}
           </main>
         </div>

@@ -5,8 +5,14 @@ import NewPatientModal from "@/components/NewPatientModal";
 
 export const dynamic = 'force-dynamic';
 
-export default async function PatientsList() {
-	const patients = await getPatients();
+export default async function PatientsList({ searchParams }) {
+	const resolvedParams = await searchParams;
+	const filter = resolvedParams?.filter;
+	let patients = await getPatients();
+
+	if (filter === 'dog') {
+		patients = patients.filter(p => p.breed.includes('犬') || p.breed.includes('柴') || p.breed.includes('プードル') || p.emoji === '🐕' || p.emoji === '🐩');
+	}
 
 	return (
 		<div className="space-y-6">
@@ -33,9 +39,9 @@ export default async function PatientsList() {
 						<button className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors w-full sm:w-auto justify-center">
 							<Filter size={16} /> 絞り込み
 						</button>
-						<button className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors bg-white w-full sm:w-auto justify-center">
+						<Link href={filter === 'dog' ? '/patients' : '?filter=dog'} prefetch={false} className={`flex items-center gap-2 px-4 py-2 border rounded-xl text-sm font-medium transition-colors w-full sm:w-auto justify-center ${filter === 'dog' ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'border-slate-200 text-slate-600 hover:bg-slate-50 bg-white'}`}>
 							🐾 犬のみ表示
-						</button>
+						</Link>
 					</div>
 				</div>
 
@@ -76,10 +82,8 @@ export default async function PatientsList() {
 											</span>
 										</td>
 										<td className="px-6 py-4 text-center">
-											<Link href={`/patients/${pet.dbId}`}>
-												<button className="text-slate-400 hover:text-emerald-600 p-2 rounded-lg hover:bg-emerald-50 transition-colors">
-													<ChevronRight size={20} />
-												</button>
+											<Link href={`/patients/${pet.dbId}`} className="inline-block p-2 text-emerald-600 hover:text-white bg-emerald-50 hover:bg-emerald-500 rounded-lg transition-colors font-medium text-xs shadow-sm shadow-emerald-500/10">
+												詳細を開く
 											</Link>
 										</td>
 									</tr>

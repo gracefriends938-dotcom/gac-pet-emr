@@ -8,20 +8,24 @@ export default function Sidebar() {
   const router = useRouter();
 
   async function handleLogout() {
-    await fetch('/api/auth/logout', { method: 'POST' });
-    router.push('/login');
-    router.refresh();
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      window.location.href = '/login';
+    }
   }
 
   return (
-    <aside className="w-64 bg-slate-900 text-slate-300 flex flex-col h-full border-r border-slate-800 shadow-xl transition-all duration-300">
+    <aside className="w-64 bg-slate-900 text-slate-300 flex flex-col h-full border-r border-slate-800 shadow-xl transition-all duration-300 print:hidden">
       <div className="p-6 flex items-center gap-3 border-b border-slate-800">
         <div className="bg-emerald-500 text-white p-2 rounded-lg shadow-lg shadow-emerald-500/30">
           <Stethoscope size={24} />
         </div>
         <div>
           <span className="text-xl font-bold text-white tracking-wide">Pet EMR</span>
-          <p className="text-xs text-slate-500">Grace Animal Clinic</p>
+          <p className="text-xs text-slate-500">G.A.Cアニマルクリニック</p>
         </div>
       </div>
 

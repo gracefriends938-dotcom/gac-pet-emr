@@ -1,12 +1,15 @@
 import Link from "next/link";
-import { ChevronLeft, Edit3, Stethoscope, ActivitySquare } from "lucide-react";
+import { ChevronLeft, Edit3, Stethoscope, ActivitySquare, FileText } from "lucide-react";
 import { getPatients, getPatientRecords } from "@/lib/sheets";
 import NewRecordModal from "@/components/NewRecordModal";
+import EditPatientModal from "@/components/EditPatientModal";
+import EditRecordModal from "@/components/EditRecordModal";
 
 export const dynamic = 'force-dynamic';
 
 export default async function PatientDetail({ params }) {
-	const { id: dbId } = params;
+	const resolvedParams = await params;
+	const dbId = resolvedParams.id;
 	const allPatients = await getPatients();
 	const patient = allPatients.find(p => p.dbId === dbId);
 	const records = await getPatientRecords(dbId);
@@ -51,9 +54,13 @@ export default async function PatientDetail({ params }) {
 								<p className="text-slate-400 text-xs mb-1">飼い主情報</p>
 								<div className="font-medium text-slate-800">{patient.owner} 様</div>
 							</div>
-							<button className="w-full py-2 flex items-center justify-center gap-2 border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 transition-colors font-medium mt-4">
-								<Edit3 size={16} /> 基本情報を編集
-							</button>
+							{(patient.updatedAt || patient.updatedBy) && (
+								<div className="pt-2 border-t border-slate-100 mt-2">
+									<p className="text-slate-400 text-[10px] mb-1">基本情報 最終更新</p>
+									<p className="text-slate-600 text-xs font-medium">{patient.updatedAt} by {patient.updatedBy || '不明'}</p>
+								</div>
+							)}
+							<EditPatientModal patient={patient} />
 						</div>
 					</div>
 				</div>
@@ -65,10 +72,8 @@ export default async function PatientDetail({ params }) {
 							<Stethoscope className="text-emerald-500" /> カルテ履歴
 						</h2>
 						<div className="flex gap-2">
-							<Link href={`/patients/${patient.id}/billing`}>
-								<button className="bg-white border border-slate-200 hover:bg-emerald-50 hover:border-emerald-200 text-emerald-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm focus:ring-2 flex items-center gap-2">
-									<ActivitySquare size={16} /> 会計・明細を作成
-								</button>
+							<Link href={`/patients/${dbId}/billing`} className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-sm shadow-emerald-500/20 active:scale-95 transition-all flex items-center gap-2">
+								<FileText size={18} /> 会計・明細を作成
 							</Link>
 							<NewRecordModal patientId={patient.dbId} />
 						</div>
@@ -86,7 +91,7 @@ export default async function PatientDetail({ params }) {
 										</div>
 										<div className="flex items-center gap-3">
 											<span className="text-xs text-slate-500">体重: {record.weight}kg</span>
-											<button className="text-slate-400 hover:text-emerald-600 transition-colors"><Edit3 size={16} /></button>
+											<EditRecordModal record={record} />
 										</div>
 									</div>
 									<div className="p-6 pl-8 space-y-6 text-sm">
@@ -103,6 +108,11 @@ export default async function PatientDetail({ params }) {
 												<div>
 													<h4 className="font-semibold text-slate-700 mb-1 border-b border-slate-100 pb-1">備考</h4>
 													<p className="text-slate-600 leading-relaxed">{record.notes}</p>
+												</div>
+											)}
+											{(record.updatedAt || record.updatedBy) && (
+												<div className="pt-2 text-right">
+													<p className="text-slate-400 text-[11px]">最終更新: {record.updatedAt} by {record.updatedBy || '不明'}</p>
 												</div>
 											)}
 										</div>

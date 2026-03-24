@@ -1,6 +1,11 @@
-import { Activity, Clock, Users, CalendarCheck2 } from "lucide-react";
+import { Activity, Clock, Users, CalendarCheck2, ExternalLink } from "lucide-react";
+import Link from "next/link";
+import { getPatients } from "@/lib/sheets";
 
-export default function Home() {
+export default async function Home() {
+  const allPatients = await getPatients();
+  const todaysPatients = allPatients.slice(0, 4);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between mb-8">
@@ -14,7 +19,7 @@ export default function Home() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
           title="本日の予約"
-          value="12"
+          value={todaysPatients.length}
           icon={<CalendarCheck2 className="text-emerald-500" size={24} />}
           trend="+2"
           trendLabel="昨日比"
@@ -34,8 +39,8 @@ export default function Home() {
           trendLabel="先週比"
         />
         <StatCard
-          title="新規患者"
-          value="2"
+          title="総患者数"
+          value={allPatients.length}
           icon={<Users className="text-indigo-500" size={24} />}
         />
       </div>
@@ -44,33 +49,32 @@ export default function Home() {
         {/* Main schedule/patients list */}
         <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-bold text-slate-800">本日の診察スケジュール</h2>
-            <button className="text-sm text-emerald-600 font-medium hover:text-emerald-700">すべて見る</button>
+            <h2 className="text-lg font-bold text-slate-800">登録されている患者（最新）</h2>
+            <Link href="/patients" className="text-sm text-emerald-600 font-medium hover:text-emerald-700 hover:underline">すべて見る</Link>
           </div>
 
           <div className="space-y-4">
-            {mockPatients.map((patient, i) => (
-              <div key={i} className="flex items-center justify-between p-4 rounded-xl border border-slate-100 hover:border-emerald-200 hover:shadow-md transition-all group bg-slate-50/50 hover:bg-white cursor-pointer">
+            {todaysPatients.map((patient, i) => (
+              <Link key={i} href={`/patients/${patient.dbId}`} className="flex items-center justify-between p-4 rounded-xl border border-slate-100 hover:border-emerald-200 hover:shadow-md transition-all group bg-slate-50/50 hover:bg-white cursor-pointer block">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-full bg-slate-200 flex items-center justify-center overflow-hidden border-2 border-white shadow-sm">
-                    {/* Placeholder for pet image or icon */}
                     <span className="text-2xl">{patient.emoji}</span>
                   </div>
                   <div>
-                    <h3 className="font-bold text-slate-800">{patient.name} <span className="text-xs font-normal text-slate-500 ml-2">{patient.species} / {patient.age}</span></h3>
-                    <p className="text-sm text-slate-500 mt-0.5">{patient.owner} 様 - {patient.reason}</p>
+                    <h3 className="font-bold text-slate-800">{patient.name} <span className="text-xs font-normal text-slate-500 ml-2">{patient.breed} / {patient.age}</span></h3>
+                    <p className="text-sm text-slate-500 mt-0.5">{patient.owner} 様</p>
                   </div>
                 </div>
                 <div className="flex flex-col items-end gap-2">
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${patient.status === '診察中' ? 'bg-emerald-100 text-emerald-700' :
-                      patient.status === '待合室' ? 'bg-amber-100 text-amber-700' :
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${patient.status === '健康' ? 'bg-emerald-100 text-emerald-700' :
+                      patient.status === '要注意' ? 'bg-rose-100 text-rose-700' :
                         'bg-slate-100 text-slate-600'
                     }`}>
                     {patient.status}
                   </span>
-                  <span className="text-sm font-medium text-slate-600">{patient.time}</span>
+                  <span className="text-slate-400 group-hover:text-emerald-500 transition-colors"><ExternalLink size={18} /></span>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         </div>

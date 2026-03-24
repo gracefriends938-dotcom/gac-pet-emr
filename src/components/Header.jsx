@@ -1,8 +1,10 @@
+import Link from "next/link";
+
 export default function Header() {
 	return (
-		<header className="h-16 bg-white/80 backdrop-blur-md border-b border-slate-200 flex items-center px-8 shadow-sm justify-between sticky top-0 z-10 transition-all">
+		<header className="h-16 bg-white/80 backdrop-blur-md border-b border-slate-200 flex items-center px-8 shadow-sm justify-between sticky top-0 z-10 transition-all print:hidden">
 			<div>
-				<h2 className="text-lg font-semibold text-slate-800">本日の診察予定</h2>
+				<h2 className="text-lg font-bold text-slate-800 tracking-tight">本日の診察予定</h2>
 				<p className="text-xs text-slate-500">2026年3月11日 (水)</p>
 			</div>
 
@@ -12,9 +14,9 @@ export default function Header() {
 					<span className="absolute top-1 right-2 w-2 h-2 bg-rose-500 rounded-full"></span>
 				</button>
 				<div className="h-8 w-[1px] bg-slate-200 mx-2"></div>
-				<button className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm shadow-emerald-500/20 active:scale-95 flex items-center gap-2">
+				<Link href="/patients" className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm shadow-emerald-500/20 active:scale-95 flex items-center gap-2">
 					<span>+</span> 新規受付
-				</button>
+				</Link>
 			</div>
 		</header>
 	);

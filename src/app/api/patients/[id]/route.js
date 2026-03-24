@@ -1,20 +1,11 @@
 import { NextResponse } from 'next/server';
-import { addPatient, getPatients } from '@/lib/sheets';
+import { updatePatient } from '@/lib/sheets';
 import { cookies } from 'next/headers';
 import { verifyToken, COOKIE_NAME } from '@/lib/auth';
 
-export async function GET() {
+export async function PUT(request, { params }) {
 	try {
-		const patients = await getPatients();
-		return NextResponse.json(patients);
-	} catch (error) {
-		console.error('API Error:', error);
-		return NextResponse.json({ success: false, error: error.message }, { status: 500 });
-	}
-}
-
-export async function POST(request) {
-	try {
+		const { id } = await params;
 		const body = await request.json();
 
 		const cookieStore = await cookies();
@@ -22,7 +13,7 @@ export async function POST(request) {
 		const user = await verifyToken(token);
 		if (user) body.updatedBy = user.username;
 
-		const result = await addPatient(body);
+		const result = await updatePatient(id, body);
 		return NextResponse.json({ success: true, ...result });
 	} catch (error) {
 		console.error('API Error:', error);
