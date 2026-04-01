@@ -1,7 +1,5 @@
 "use client";
 
-export const dynamic = 'force-dynamic';
-
 import { useState, useRef, useEffect, useMemo, use } from "react";
 import { ChevronLeft, Save, Trash2, Printer, Search, Plus, Loader2 } from "lucide-react";
 import Link from "next/link";

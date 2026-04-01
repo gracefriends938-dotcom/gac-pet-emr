@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server';
 import { getUsers } from '@/lib/sheets';
 import { createToken, COOKIE_NAME } from '@/lib/auth';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function POST(request) {
   try {
     const { username, password } = await request.json();
@@ -12,7 +15,9 @@ export async function POST(request) {
 
     const users = await getUsers();
     const user = users.find(
-      (u) => u.username === username && u.password === password
+      (u) => 
+        (u.username?.trim() === username?.trim() || u.id?.trim() === username?.trim()) && 
+        u.password?.trim() === password?.trim()
     );
 
     if (!user) {

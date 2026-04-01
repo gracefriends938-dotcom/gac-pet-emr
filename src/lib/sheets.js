@@ -1,17 +1,16 @@
 import { google } from 'googleapis';
 
-const SCOPES = ['https://www.googleapis.com/auth/spreadsheets'];
 const SPREADSHEET_ID = process.env.GOOGLE_SHEETS_SPREADSHEET_ID;
+const SCOPES = ['https://www.googleapis.com/auth/spreadsheets'];
 
+/**
+ * Initialize Google Sheets API client
+ */
 async function getSheetsClient() {
 	try {
+		const credentials = JSON.parse(process.env.GOOGLE_SHEETS_CREDENTIALS);
 		const auth = new google.auth.GoogleAuth({
-			credentials: {
-				client_email: process.env.GOOGLE_SHEETS_CLIENT_EMAIL,
-				private_key: (process.env.GOOGLE_SHEETS_PRIVATE_KEY || '')
-					.replace(/^"|"$/g, '') // Remove wrapping quotes if any
-					.replace(/\\n/g, '\n'), // Replace escaped newlines
-			},
+			credentials,
 			scopes: SCOPES,
 		});
 		return google.sheets({ version: 'v4', auth });
@@ -22,7 +21,7 @@ async function getSheetsClient() {
 }
 
 /**
- * Get all rows from a sheet
+ * Fetch data from a specific range in the spreadsheet
  */
 export async function getSheetData(range) {
 	const sheets = await getSheetsClient();

@@ -1,11 +1,22 @@
+'use client';
+
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 export default function Header() {
+	const [dateStr, setDateStr] = useState('');
+
+	useEffect(() => {
+		const now = new Date();
+		const days = ['日', '月', '火', '水', '木', '金', '土'];
+		setDateStr(`${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日 (${days[now.getDay()]})`);
+	}, []);
+
 	return (
 		<header className="h-16 bg-white/80 backdrop-blur-md border-b border-slate-200 flex items-center px-8 shadow-sm justify-between sticky top-0 z-10 transition-all print:hidden">
 			<div>
 				<h2 className="text-lg font-bold text-slate-800 tracking-tight">本日の診察予定</h2>
-				<p className="text-xs text-slate-500">2026年3月11日 (水)</p>
+				<p className="text-xs text-slate-500">{dateStr}</p>
 			</div>
 
 			<div className="flex flex-row items-center gap-4">
